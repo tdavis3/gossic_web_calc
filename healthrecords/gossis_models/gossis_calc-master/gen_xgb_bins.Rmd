@@ -1,0 +1,110 @@
+---
+title: "Generate xGB Binary Files"
+author: "Jesse D. Raffa"
+date: "March 20, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+xgb_dir <- "~/data/GOSSIS/final3/xgbTree-all_folds_tuneLength4/gbm"
+save_dir <- "~/data2/GOSSIS/gossis_calc/GOSSIS_calc/xgb_bin/"
+setwd(xgb_dir)
+
+files <- grep("FINAL",dir(),value = TRUE)
+print(length(files))
+```
+
+# Manipulate data.frame
+
+```{r}
+setwd("~/data/GOSSIS/")
+dat <- read.csv(gzfile("~/data/GOSSIS/gossis-data-2018-03-20.csv.gz"),stringsAsFactors=FALSE)
+library(ggplot2); library(dplyr); library(plotly); #library(mgcv); 
+library(lme4); library(pROC); library(splines)
+ap_dx <- read.csv("apache_diagnosis_mapv2-2017-12-13.csv",stringsAsFactors=FALSE)
+setwd("~/data/GOSSIS/final3/xgbTree-all_folds_tuneLength4");
+
+#dat <- dat %>% left_join(ap_dx,by=c("diagnosis_apache"="code"))
+#ap_dx$sub_Dx <- NA;
+#ap_dx$dx_class <- NA;
+#ap_dx$dx_sub <- NA;
+
+ap_dx$sub_Dx <- sapply(stringr::str_split(as.character(ap_dx$code),"\\."),length)
+ap_dx$dx_class <- sapply(stringr::str_split(as.character(ap_dx$code),"\\."),"[[",1)
+ap_dx$dx_sub <- sapply(stringr::str_split(as.character(ap_dx$code),"\\."),function(x) { return(ifelse(is.na(x[2]),"99",x[2]))})
+
+dat$sub_Dx <- sapply(stringr::str_split(as.character(dat$apache_3j_diagnosis),"\\."),length)
+dat$dx_class <- sapply(stringr::str_split(as.character(dat$apache_3j_diagnosis),"\\."),"[[",1)
+dat$dx_sub <- sapply(stringr::str_split(as.character(dat$apache_3j_diagnosis),"\\."),function(x) { return(ifelse(is.na(x[2]),"99",x[2]))})
+dat$dx_sub[]
+
+dat$d1_creatinine_range <- dat$d1_creatinine_max - dat$d1_creatinine_min
+dat$dcs_all_high <- as.numeric(dat$gcs_eyes_apache==4 & dat$gcs_verbal_apache==5 & dat$gcs_motor_apache==6)
+dat$dcs_some_high <- as.numeric( (dat$gcs_eyes_apache==4 | dat$gcs_verbal_apache==5 | dat$gcs_motor_apache==6) & dat$dcs_all_high==0 )
+dat$dcs_all_low <- as.numeric(dat$gcs_eyes_apache==1 & dat$gcs_verbal_apache==1 & dat$gcs_motor_apache==1)
+dat$dcs_intermed <- as.numeric(!with(dat,dcs_all_high|dcs_some_high | dcs_all_low))
+dat$vent <- as.numeric(dat$ventilated_apache | dat$intubated_apache)
+#dat %>% mutate(dx_class)
+dat <- dat %>% mutate(dcs_group=case_when(dcs_all_high==1 ~ "ALL_HIGH",
+                                          dcs_some_high==1 ~ "SOME_HIGH",
+                                          dcs_all_low==1 ~ "ALL_LOW",
+                                          dcs_intermed==1 ~ "INTERM_DCS"),dcs_group = as.factor(dcs_group)) %>%
+                                          select(-dcs_all_high,-dcs_some_high,-dcs_all_low,-dcs_intermed)
+
+dat <- dat %>% rename(group=apache_3j_bodysystem) %>% mutate(group=as.factor(ifelse(data_source=="eicu" & group=="", "Other medical disorders", as.character(group))),dx_class=ifelse(data_source=="eicu" & dx_class==0,1002,dx_class)) 
+dat <- dat %>% mutate(group = as.factor(group),data_source=as.factor(data_source),icu_type=as.factor(icu_type),icu_admit_source=as.factor(icu_admit_source))
+
+#dat <- dat %>% sample_frac(0.04)
+
+dat_tr <- dat %>% mutate(row_id=row_number()) %>% group_by(data_source,hospital_id) %>% sample_frac(0.7) %>% ungroup()
+dat_te <- dat %>% mutate(row_id=row_number()) %>% filter(!(row_id %in% dat_tr$row_id)) %>% ungroup()
+
+dat_tr_c <- dat_tr;
+dat_tr <- dat_tr %>% filter(data_source %in% c("anzics","eicu")) %>% mutate(data_source=droplevels(data_source),group=droplevels(group))
+
+dat_te_c <- dat_te;
+dat_te <- dat_te %>% filter(data_source %in% c("anzics","eicu")) %>% mutate(data_source=droplevels(data_source),group=droplevels(group))
+
+
+dat_tr_tr <- dat_tr %>% mutate(row_id2=row_number()) %>% group_by(data_source,hospital_id) %>% sample_frac(0.7) %>% ungroup()
+
+dat_tr_v <- dat_tr %>% mutate(row_id2=row_number()) %>% filter(!(row_id2 %in% dat_tr_tr$row_id2))
+
+
+K <- 5
+library(caret)
+dat_tr <- dat_tr %>% filter(!is.na(hospital_death))
+yy <- dat_tr$hospital_death
+ids_ <- dat_tr$encounter_id
+dat_tr <- dat_tr %>% select(starts_with("d1"), ends_with("apache"),contains("dcs"), -contains("invasive"),-contains("prob"),-contains("death"),-contains("score"),-contains("gcs"),group,-d1_creatinine_min,icu_admit_source,icu_type,elective_surgery,age,dx_class,dx_sub,vent,aids,cirrhosis,diabetes_mellitus,lymphoma,solid_tumor_with_metastasis,-contains("urine"),hepatic_failure)
+dat_tr <- dat_tr %>% mutate(fold=sample(1:K,replace=TRUE,size=nrow(dat_tr)))
+set.seed(42)
+dat_f <- dat_tr %>% sample_n(5)
+write.csv(dat_f,file=paste0(save_dir,"out.csv"),row.names = FALSE)
+``` 
+
+
+
+```{r}
+rm(dat_f)
+dat_f <- read.csv(paste0(save_dir,"out.csv"))
+library(xgboost); library(caret); library(dplyr)
+unit_test <- list()
+for(file in files) {
+  setwd(xgb_dir)
+  load(file)
+  varn <- stringr::str_replace(string=file,"gbm_obj-","")
+  varn <- stringr::str_replace(varn,"-FINAL.rdata","")
+  setwd(save_dir)
+  xgb.save(gbm.obj$finalModel,fname=varn)
+  #unit_test[[varn]] <- predict(gbm.obj,newdata = dat_f,na.action=na.pass)
+  
+  unit_test[[varn]] <- predict(gbm.obj,newdata = dat_f %>% mutate(dx_class=as.factor(as.character(dx_class))) %>% mutate_at(vars(starts_with("d1")), as.numeric) %>% mutate_at(c('fio2_apache', 'paco2_apache', 'paco2_for_ph_apache', 'pao2_apache', 'ph_apache'),as.numeric),na.action=na.pass)
+}
+
+write.csv(as.data.frame(unit_test),"out_test.csv",row.names = FALSE)
+```

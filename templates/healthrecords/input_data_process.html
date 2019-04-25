@@ -1,0 +1,17 @@
+{% extends "healthrecords/header.html" %}
+
+{% block content %}
+    <h3> {{ upload_title }} </h3>
+    {% for label, value in upload_summary.items %}
+        {{ label }}: {{ value }}
+        <br>
+    {% endfor %}
+    <h3> {{ imputation_title }} </h3>
+    {% for label, value in imputation_summary.items %}
+        {{ label }}: {{ value }}
+        <br>
+    {% endfor %}
+    <br>
+    {{ table_title }}
+    {{ html_file }}
+{% endblock %}

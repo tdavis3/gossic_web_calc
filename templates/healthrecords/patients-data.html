@@ -1,0 +1,9 @@
+{% extends "healthrecords/header.html" %}
+
+{% block content %}
+    {% for label, value in inputted_data.items %}
+        {{ label }}: {{ value }}
+        <br>
+    {% endfor %}
+{% endblock %}
+

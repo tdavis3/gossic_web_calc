@@ -1,0 +1,128 @@
+{% extends "healthrecords/header.html" %}
+
+{% block content %}
+{#    <form method="post">#}
+{#        {% csrf_token %}#}
+{#        <table class="table d-md-table table-hover">#}
+{#            <thead class="thead-light header-fixed">#}
+{#            <tr>#}
+{#                <th scope="col">Blank</th>#}
+{#                <th scope="col">Apache</th>#}
+{#                <th scope="col">Hour 1</th>#}
+{#                <th scope="col">Day 1</th>#}
+{#            </tr>#}
+{#            </thead>#}
+{#            <tbody>#}
+{#            {% for field in form %}#}
+{#                <tr>#}
+{#                    <th scope="row">{{ field.label_tag }}</th>#}
+{#                    <td>{{ field }}</td>#}
+{#                    <td>{{ field }}</td>#}
+{#                    <td>{{ field }}</td>#}
+{#                </tr>#}
+{#            {% endfor %}#}
+{#            </tbody>#}
+{#        </table>#}
+{#        <br>#}
+{#        <button type="submit" class="btn btn-primary">Calculate</button>#}
+{#    </form>#}
+
+    <h3>
+    Upload a csv file with each row representing a patient and their ICU data.
+    </h3>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+            <p>
+                {{ form }}
+            </p>
+            <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+
+{% endblock %}
+
+{#    <form method="post">#}
+{#        {% csrf_token %}#}
+{#        <table class="table d-md-table table-hover">#}
+{#            <thead class="thead-light header-fixed">#}
+{#            <tr>#}
+{#                <th scope="col">Blank</th>#}
+{#                <th scope="col">Apache</th>#}
+{#                <th scope="col">Hour 1</th>#}
+{#                <th scope="col">Day 1</th>#}
+{#            </tr>#}
+{#            </thead>#}
+{#            <tbody>#}
+{#            <tr>#}
+{#                <th><label for="id_sodium">Sodium (mEq/L):</label></th>#}
+{#                <td><input type="number" name="sodium" value="140" step="any" required id="id_sodium"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_temp">Temperature (C):</label></th>#}
+{#                <td><input type="number" name="temp" value="37" step="any" required id="id_temp"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_creatinine">Creatinine (mg/dL):</label></th>#}
+{#                <td><input type="number" name="creatinine" value="1" step="any" required id="id_creatinine"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_bilirubin">Bilirubin (mg/dL):</label></th>#}
+{#                <td><input type="number" name="bilirubin" value="1" step="any" required id="id_bilirubin"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_albumin">Albumin (g/L):</label></th>#}
+{#                <td><input type="number" name="albumin" value="40" step="any" required id="id_albumin"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_arterial_ph">Arterial pH:</label></th>#}
+{#                <td><input type="number" name="arterial_ph" value="7.4" step="any" required id="id_arterial_ph"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_arterial_po">Arterial pO2 (mmHg):</label></th>#}
+{#                <td><input type="number" name="arterial_po" value="90" step="any" required id="id_arterial_po"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_heartrate">HeartRate (/min):</label></th>#}
+{#                <td><input type="number" name="heartrate" value="80" step="any" required id="id_heartrate"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_wbc">WBC (x1000/mm3):</label></th>#}
+{#                <td><input type="number" name="wbc" value="10" step="any" required id="id_wbc"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_paofio">PAO FiO2 (%):</label></th>#}
+{#                <td><input type="number" name="paofio" step="any" required id="id_paofio"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_resperate">Resperate:</label></th>#}
+{#                <td><input type="number" name="resperate" step="any" required id="id_resperate"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_potassium">Potassium:</label></th>#}
+{#                <td><input type="number" name="potassium" step="any" required id="id_potassium"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_platelets">Platelets:</label></th>#}
+{#                <td><input type="number" name="platelets" step="any" required id="id_platelets"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_lactate">Lactate:</label></th>#}
+{#                <td><input type="number" name="lactate" step="any" required id="id_lactate"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_hemoglobin">Hemoglobin:</label></th>#}
+{#                <td><input type="number" name="hemoglobin" step="any" required id="id_hemoglobin"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_glucose">Glucose:</label></th>#}
+{#                <td><input type="number" name="glucose" step="any" required id="id_glucose"></td>#}
+{#            </tr>#}
+{#            <tr>#}
+{#                <th><label for="id_calcium">Calcium:</label></th>#}
+{#                <td><input type="number" name="calcium" step="any" required id="id_calcium"></td>#}
+{#            </tr>#}
+{#            </tbody>#}
+{#        </table>#}
+{#        <br>#}
+{#        <button type="submit" class="btn btn-primary">Calculate</button>#}
+{#    </form>#}
+{#{% endblock %}#}
