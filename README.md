@@ -7,3 +7,5 @@ Applied Machine Learning on the backend
 - data preprocessing when uploading csv to site
 - xgboost model for imputation (missing data)
 - prediction for each patient
+
+My main work is in healthrecords/gossis_models - Tyrone
